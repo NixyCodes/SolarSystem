@@ -3,6 +3,7 @@ import './style.css'
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { distance } from 'three/tsl';
+import { CSS2DRenderer, CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer';
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -14,6 +15,13 @@ const renderer = new THREE.WebGLRenderer({
 renderer.setPixelRatio(window.devicePixelRatio);
 renderer.setSize(window.innerWidth, window.innerHeight);
 camera.position.setZ(30);
+
+const labelRenderer = new CSS2DRenderer();
+labelRenderer.setSize(window.innerWidth, window.innerHeight);
+labelRenderer.domElement.style.position = 'absolute';
+labelRenderer.domElement.style.top = '0px';
+labelRenderer.domElement.style.pointerEvents = 'none'; // allows interaction with main canvas
+document.body.appendChild(labelRenderer.domElement);
 
 const pointLight = new THREE.PointLight(0xffffff);
 pointLight.position.set(5, 5, 5);
@@ -62,7 +70,7 @@ glow.scale.set(15, 15, 1); // bigger than sun
 sun.add(glow);
 const textureLoader = new THREE.TextureLoader();
 
-function createOrbitingPlanet(textureFile, size, distance, speed, revolutionSpeed) {
+function createOrbitingPlanet(textureFile, size, distance, speed, revolutionSpeed, name) {
   const pivot = new THREE.Object3D();
   scene.add(pivot);
 
@@ -75,15 +83,25 @@ function createOrbitingPlanet(textureFile, size, distance, speed, revolutionSpee
   planet.position.set(distance, 0, 0); 
   pivot.add(planet);
 
+  const div = document.createElement('div');
+  div.className = 'label';
+  div.textContent = name,
+  div.style.color = 'white';
+  div.style.fontSize = '14px';
+  div.style.fontFamily =  'sans-serif';
+  const label = new CSS2DObject(div);
+  label.position.set(0, size + 0.5, 0);
+  planet.add(label);
+
   return { pivot, planet, speed, revolutionSpeed };
 }
 
-const mercury = createOrbitingPlanet('mercury1.jpg', 0.5, 6, 0.01, 0.02);
-const venus   = createOrbitingPlanet('venus.jpg',   0.9, 9,  0.008, 0.015);
-const earth   = createOrbitingPlanet('earth.jpg',   1,   12, 0.01,  0.01);
-const mars    = createOrbitingPlanet('mars.jpg',    0.7, 15, 0.009, 0.008);
-const jupiter = createOrbitingPlanet('jupiter.jpg', 2.5, 20, 0.006, 0.007);
-const saturn  = createOrbitingPlanet('saturn.jpg',  2,   27, 0.005, 0.006);
+const mercury = createOrbitingPlanet('mercury1.jpg', 0.5, 6, 0.01, 0.02,'Mercury');
+const venus   = createOrbitingPlanet('venus.jpg',   0.9, 9,  0.008, 0.015,'Venus');
+const earth   = createOrbitingPlanet('earth.jpg',   1,   12, 0.01,  0.01, 'Earth');
+const mars    = createOrbitingPlanet('mars.jpg',    0.7, 15, 0.009, 0.008, 'Mars');
+const jupiter = createOrbitingPlanet('jupiter.jpg', 2.5, 20, 0.006, 0.007, 'Jupiter');
+const saturn  = createOrbitingPlanet('saturn.jpg',  2,   27, 0.005, 0.006, 'Saturn');
 const ringGeometry = new THREE.RingGeometry(2.5, 4.5, 64);
 const ringMaterial = new THREE.MeshBasicMaterial({
   color: 0xaaaaaa,
@@ -99,8 +117,8 @@ rings.renderOrder = 1; // keeps it visible without weird clipping
 
 // attach rings to Saturn so they move together
 saturn.planet.add(rings);
-const uranus  = createOrbitingPlanet('uranus.jpg',  1.5, 33, 0.004, 0.004);
-const neptune = createOrbitingPlanet('neptune.jpg', 1.5, 39, 0.003, 0.003);
+const uranus  = createOrbitingPlanet('uranus.jpg',  1.5, 33, 0.004, 0.004, 'Uranus');
+const neptune = createOrbitingPlanet('neptune.jpg', 1.5, 39, 0.003, 0.003, 'Neptune');
 
 function animate() {
   requestAnimationFrame(animate); 
@@ -123,5 +141,6 @@ function animate() {
   uranus.pivot.rotation.y  += uranus.revolutionSpeed;
   neptune.pivot.rotation.y += neptune.revolutionSpeed;
   renderer.render(scene, camera);
+  labelRenderer.render(scene, camera);
 }
 animate();
